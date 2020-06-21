@@ -52,10 +52,16 @@
 <!--               enableUpdateByExample="false"-->
 <!--               enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">-->
 <!--        </table>-->
-<!--        <table tableName="tb_blog_relation" domainObjectName="BlogTagRelation"-->
+<!--        <table tableName="tb_blog_tag_relation" domainObjectName="BlogTagRelation"-->
 <!--               enableCountByExample="false"-->
 <!--               enableUpdateByExample="false"-->
 <!--               enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">-->
 <!--        </table>-->
+<!--        <table tableName="tb_blog" domainObjectName="Blog"-->
+<!--               enableCountByExample="false"-->
+<!--               enableUpdateByExample="false"-->
+<!--               enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false">-->
+<!--        </table>-->
+
     </context>
 </generatorConfiguration>
