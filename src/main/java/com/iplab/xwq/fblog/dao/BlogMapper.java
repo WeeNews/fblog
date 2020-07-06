@@ -2,6 +2,7 @@ package com.iplab.xwq.fblog.dao;
 
 import com.iplab.xwq.fblog.entity.Blog;
 import com.iplab.xwq.fblog.utils.PageUtil;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -27,4 +28,7 @@ public interface BlogMapper {
     int getTotalBlogs(PageUtil pageUtil);
 
     int deleteBatch(Integer[] ids);
+
+    List<Blog> findBlogListByType(@Param("type") int type, @Param("limit") int limit);
+
 }

@@ -8,16 +8,22 @@ import com.iplab.xwq.fblog.entity.Blog;
 import com.iplab.xwq.fblog.entity.BlogCategory;
 import com.iplab.xwq.fblog.entity.BlogTag;
 import com.iplab.xwq.fblog.entity.BlogTagRelation;
+import com.iplab.xwq.fblog.entity.vo.BlogListVO;
+import com.iplab.xwq.fblog.entity.vo.SimpleBlogListVO;
 import com.iplab.xwq.fblog.service.BlogService;
 import com.iplab.xwq.fblog.utils.PageResult;
 import com.iplab.xwq.fblog.utils.PageUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class BlogServiceImpl implements BlogService {
@@ -171,5 +177,59 @@ public class BlogServiceImpl implements BlogService {
     @Override
     public Boolean deleteBatch(Integer[] ids) {
         return blogMapper.deleteBatch(ids) > 0;
+    }
+
+    @Override
+    public List<SimpleBlogListVO> getBlogListForIndexPage(int type) {
+        List<SimpleBlogListVO> listVOS = new ArrayList<>();
+        List<Blog> blogList = blogMapper.findBlogListByType(type,9);
+        for (Blog blog:blogList) {
+            SimpleBlogListVO listVO = new SimpleBlogListVO();
+            listVO.setBlogId(blog.getBlogId());
+            listVO.setBlogTitle(blog.getBlogTitle());
+            listVOS.add(listVO);
+        }
+        return listVOS;
+    }
+
+    @Override
+    public PageResult getBlogsForIndexPage(int page) {
+        Map<String ,Object> params = new HashMap<>();
+        params.put("page",page);
+        params.put("limit",8);
+        params.put("blogStatus",1); //发布状态
+        PageUtil pageUtil = new PageUtil(params);
+        List<Blog> blogs = blogMapper.findBlogList(pageUtil);
+        List<BlogListVO> blogListVOList = getBlogListVOsByBlogs(blogs);
+        int total = blogMapper.getTotalBlogs(pageUtil);
+        PageResult pageResult = new PageResult(blogListVOList,total,pageUtil.getLimit(),pageUtil.getPage());
+        return pageResult;
+    }
+
+    private List<BlogListVO> getBlogListVOsByBlogs(List<Blog> blogList) {
+        List<BlogListVO> blogListVOS = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(blogList)) {
+            List<Integer> categoryIds = blogList.stream().map(Blog::getBlogCategoryId).collect(Collectors.toList());
+            Map<Integer, String> blogCategoryMap = new HashMap<>();
+            if (!CollectionUtils.isEmpty(categoryIds)) {
+                List<BlogCategory> blogCategories = categoryMapper.selectByCategoryIds(categoryIds);
+                if (!CollectionUtils.isEmpty(blogCategories)) {
+                    blogCategoryMap = blogCategories.stream().collect(Collectors.toMap(BlogCategory::getCategoryId, BlogCategory::getCategoryIcon, (key1, key2) -> key2));
+                }
+            }
+            for (Blog blog : blogList) {
+                BlogListVO blogListVO = new BlogListVO();
+                BeanUtils.copyProperties(blog, blogListVO);
+                if (blogCategoryMap.containsKey(blog.getBlogCategoryId())) {
+                    blogListVO.setBlogCategoryIcon(blogCategoryMap.get(blog.getBlogCategoryId()));
+                } else {
+                    blogListVO.setBlogCategoryId(0);
+                    blogListVO.setBlogCategoryName("默认分类");
+                    blogListVO.setBlogCategoryIcon("/admin/dist/img/category/1.png");
+                }
+                blogListVOS.add(blogListVO);
+            }
+        }
+        return blogListVOS;
     }
 }

@@ -3,6 +3,7 @@ package com.iplab.xwq.fblog.service.impl;
 import com.iplab.xwq.fblog.dao.BlogTagMapper;
 import com.iplab.xwq.fblog.dao.BlogTagRelationMapper;
 import com.iplab.xwq.fblog.entity.BlogTag;
+import com.iplab.xwq.fblog.entity.BlogTagCount;
 import com.iplab.xwq.fblog.service.TagService;
 import com.iplab.xwq.fblog.utils.PageResult;
 import com.iplab.xwq.fblog.utils.PageUtil;
@@ -47,5 +48,9 @@ public class TagServiceImpl implements TagService {
         if (!CollectionUtils.isEmpty(relations))
             return false;
         return blogTagMapper.deleteBatch(ids) > 0;
+    }
+    @Override
+    public List<BlogTagCount> getBlogTagCountForIndex() {
+        return blogTagMapper.getTagCount();
     }
 }
