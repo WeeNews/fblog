@@ -31,4 +31,8 @@ public interface BlogMapper {
 
     List<Blog> findBlogListByType(@Param("type") int type, @Param("limit") int limit);
 
+    List<Blog> getBlogsPageByTagId(PageUtil pageUtil);
+
+    int getTotalBlogsByTagId(PageUtil pageUtil);
+
 }

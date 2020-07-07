@@ -13,6 +13,7 @@ import com.iplab.xwq.fblog.entity.vo.SimpleBlogListVO;
 import com.iplab.xwq.fblog.service.BlogService;
 import com.iplab.xwq.fblog.utils.PageResult;
 import com.iplab.xwq.fblog.utils.PageUtil;
+import com.iplab.xwq.fblog.utils.PatternUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -204,6 +205,69 @@ public class BlogServiceImpl implements BlogService {
         int total = blogMapper.getTotalBlogs(pageUtil);
         PageResult pageResult = new PageResult(blogListVOList,total,pageUtil.getLimit(),pageUtil.getPage());
         return pageResult;
+    }
+
+    @Override
+    public PageResult getBlogsPageBySearch(String keyword, int page) {
+        if(page > 0 && PatternUtil.validKeyword(keyword)){
+            Map param = new HashMap();
+            param.put("page",page);
+            param.put("limit",9);
+            param.put("keyword",keyword);
+            param.put("blogStatus",1);
+            PageUtil pageUtil = new PageUtil(param);
+            List<Blog> blogList = blogMapper.findBlogList(pageUtil);
+            List<BlogListVO> blogListVOList = getBlogListVOsByBlogs(blogList);//数据填充
+            int total = blogMapper.getTotalBlogs(pageUtil);
+            PageResult pageResult = new PageResult(blogListVOList,total,pageUtil.getLimit(),pageUtil.getPage());
+            return pageResult;
+        }
+        return null;
+    }
+
+    @Override
+    public PageResult getBlogsPageByCategory(String categoryName, int page) {
+        if (PatternUtil.validKeyword(categoryName)){
+            BlogCategory blogCategory = categoryMapper.selectByCategoryName(categoryName);
+            if ("默认分类".equals(categoryName) && blogCategory == null){
+                blogCategory = new BlogCategory();
+                blogCategory.setCategoryId(0);
+            }
+            if (blogCategory != null && page > 0){
+                Map param = new HashMap();
+                param.put("page",page);
+                param.put("limit",9);
+                param.put("blogCategoryId",blogCategory.getCategoryId());
+                param.put("blogStatus",1);
+                PageUtil pageUtil = new PageUtil(param);
+                List<Blog> blogList = blogMapper.findBlogList(pageUtil);
+                List<BlogListVO> blogListVOS = getBlogListVOsByBlogs(blogList);
+                int total = blogMapper.getTotalBlogs(pageUtil);
+                PageResult pageResult = new PageResult(blogListVOS,total,pageUtil.getLimit(),pageUtil.getPage());
+                return pageResult;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public PageResult getBlogsPageByTag(String tagName, int page) {
+        if (PatternUtil.validKeyword(tagName)){
+            BlogTag tag = tagMapper.selectByTagName(tagName);
+            if (tag != null && page > 0){
+                Map param = new HashMap();
+                param.put("page",page);
+                param.put("limit",9);
+                param.put("tagId",tag.getTagId());
+                PageUtil pageUtil = new PageUtil(param);
+                List<Blog> blogList = blogMapper.getBlogsPageByTagId(pageUtil);
+                List<BlogListVO> blogListVOS = getBlogListVOsByBlogs(blogList);
+                int total = blogMapper.getTotalBlogsByTagId(pageUtil);
+                PageResult pageResult = new PageResult(blogListVOS,total,pageUtil.getLimit(),pageUtil.getPage());
+                return pageResult;
+            }
+        }
+        return null;
     }
 
     private List<BlogListVO> getBlogListVOsByBlogs(List<Blog> blogList) {

@@ -42,4 +42,25 @@ public interface BlogService {
      */
     PageResult getBlogsForIndexPage(int page);
 
+    PageResult getBlogsPageBySearch(String keyword, int page);
+
+    /**
+     * 根据分类获取文章列表
+     *
+     * @param categoryName
+     * @param page
+     * @return
+     */
+    PageResult getBlogsPageByCategory(String categoryName, int page);
+
+
+    /**
+     * 根据标签获取文章列表
+     *
+     * @param tagName
+     * @param page
+     * @return
+     */
+    PageResult getBlogsPageByTag(String tagName, int page);
+
 }
