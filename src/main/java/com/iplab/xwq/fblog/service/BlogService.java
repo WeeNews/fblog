@@ -1,6 +1,7 @@
 package com.iplab.xwq.fblog.service;
 
 import com.iplab.xwq.fblog.entity.Blog;
+import com.iplab.xwq.fblog.entity.vo.BlogDetailVO;
 import com.iplab.xwq.fblog.entity.vo.SimpleBlogListVO;
 import com.iplab.xwq.fblog.utils.PageResult;
 import com.iplab.xwq.fblog.utils.PageUtil;
@@ -63,4 +64,11 @@ public interface BlogService {
      */
     PageResult getBlogsPageByTag(String tagName, int page);
 
+    /**
+     * 文章详情获取
+     *
+     * @param blogId
+     * @return
+     */
+    BlogDetailVO getBlogDetail(Long blogId);
 }
