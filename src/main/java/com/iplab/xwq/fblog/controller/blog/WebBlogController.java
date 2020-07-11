@@ -1,15 +1,22 @@
 package com.iplab.xwq.fblog.controller.blog;
 
+import com.iplab.xwq.fblog.common.Result;
+import com.iplab.xwq.fblog.common.ResultGenerator;
+import com.iplab.xwq.fblog.entity.BlogComment;
 import com.iplab.xwq.fblog.entity.vo.BlogDetailVO;
 import com.iplab.xwq.fblog.service.BlogService;
+import com.iplab.xwq.fblog.service.CommentService;
 import com.iplab.xwq.fblog.service.TagService;
+import com.iplab.xwq.fblog.utils.MyBlogUtils;
 import com.iplab.xwq.fblog.utils.PageResult;
+import com.iplab.xwq.fblog.utils.PatternUtil;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 @Controller
 public class WebBlogController {
@@ -19,6 +26,9 @@ public class WebBlogController {
 
     @Resource
     private TagService tagService;
+
+    @Resource
+    private CommentService commentService;
 
     @GetMapping({"/","/index","index.html"})
     public String index(HttpServletRequest request){
@@ -104,13 +114,71 @@ public class WebBlogController {
         return "blog/list";
     }
 
+    /**
+     * 详情页
+     *
+     * @return
+     */
     @GetMapping("/blog/{blogId}")
-    public String detail(HttpServletRequest request,@PathVariable("blogId") Long blogId){
+    public String detail(HttpServletRequest request, @PathVariable("blogId") Long blogId, @RequestParam(value = "commentPage", required = false, defaultValue = "1") Integer commentPage) {
         BlogDetailVO blogDetailVO = blogService.getBlogDetail(blogId);
-        if (blogDetailVO != null){
-            request.setAttribute("blogDetailVO",blogDetailVO);
+        if (blogDetailVO != null) {
+            request.setAttribute("blogDetailVO", blogDetailVO);
+            request.setAttribute("commentPageResult", commentService.getCommentPageByBlogIdAndPageNum(blogId, commentPage));
         }
-        request.setAttribute("pageName","详情");
+        request.setAttribute("pageName", "详情");
         return "blog/detail";
+    }
+
+    /**
+     * 评论操作
+     */
+    @PostMapping(value = "/blog/comment")
+    @ResponseBody
+    public Result comment(HttpServletRequest request, HttpSession session,
+                          @RequestParam Long blogId, @RequestParam String verifyCode,
+                          @RequestParam String commentator, @RequestParam String email,
+                          @RequestParam String websiteUrl, @RequestParam String commentBody) {
+        if (StringUtils.isEmpty(verifyCode)) {
+            return ResultGenerator.genFailResult("验证码不能为空");
+        }
+        String kaptchaCode = session.getAttribute("verifyCode") + "";
+        if (StringUtils.isEmpty(kaptchaCode)) {
+            return ResultGenerator.genFailResult("非法请求");
+        }
+        if (!verifyCode.equals(kaptchaCode)) {
+            return ResultGenerator.genFailResult("验证码错误");
+        }
+        String ref = request.getHeader("Referer");
+        if (StringUtils.isEmpty(ref)) {
+            return ResultGenerator.genFailResult("非法请求");
+        }
+        if (null == blogId || blogId < 0) {
+            return ResultGenerator.genFailResult("非法请求");
+        }
+        if (StringUtils.isEmpty(commentator) || "作者".equals(commentator)) {
+            return ResultGenerator.genFailResult("请输入正确的称呼");
+        }
+        if (StringUtils.isEmpty(email)) {
+            return ResultGenerator.genFailResult("请输入邮箱地址");
+        }
+        if (!PatternUtil.isEmail(email)) {
+            return ResultGenerator.genFailResult("请输入正确的邮箱地址");
+        }
+        if (StringUtils.isEmpty(commentBody)) {
+            return ResultGenerator.genFailResult("请输入评论内容");
+        }
+        if (commentBody.trim().length() > 200) {
+            return ResultGenerator.genFailResult("评论内容过长");
+        }
+        BlogComment comment = new BlogComment();
+        comment.setBlogId(blogId);
+        comment.setCommentator(MyBlogUtils.cleanString(commentator));
+        comment.setEmail(email);
+        if (PatternUtil.isURL(websiteUrl)) {
+            comment.setWebsiteUrl(websiteUrl);
+        }
+        comment.setCommentBody(MyBlogUtils.cleanString(commentBody));
+        return ResultGenerator.genSuccessResult(commentService.addComment(comment));
     }
 }
